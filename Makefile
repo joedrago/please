@@ -21,6 +21,7 @@ bundle: build
 all: bundle
 
 run: bundle
+	-pkill -x $(APP_NAME)
 	open $(APP_BUNDLE)
 
 clean:

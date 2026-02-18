@@ -1,12 +1,13 @@
 import AppKit
 import SwiftUI
 
-class SearchPanelController {
+class SearchPanelController: NSObject, NSWindowDelegate {
     private var panel: SearchPanel?
     private var viewModel = SearchViewModel()
+    private var isShowing = false
 
     func toggle() {
-        if let panel, panel.isVisible {
+        if isShowing {
             hide()
         } else {
             show()
@@ -25,6 +26,7 @@ class SearchPanelController {
         positionPanel(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+        isShowing = true
 
         // Post notification so SearchField can grab focus
         DispatchQueue.main.async {
@@ -33,12 +35,21 @@ class SearchPanelController {
     }
 
     func hide() {
+        guard isShowing else { return }
         panel?.orderOut(nil)
+        isShowing = false
+    }
+
+    // MARK: - NSWindowDelegate
+
+    func windowDidResignKey(_ notification: Notification) {
+        hide()
     }
 
     private func createPanel() {
         let panelRect = NSRect(x: 0, y: 0, width: 680, height: 400)
         let newPanel = SearchPanel(contentRect: panelRect)
+        newPanel.delegate = self
 
         let effectView = NSVisualEffectView(frame: panelRect)
         effectView.material = .hudWindow

@@ -14,15 +14,11 @@ class SearchPanel: NSPanel {
         backgroundColor = .clear
         hasShadow = true
         isMovableByWindowBackground = false
-        hidesOnDeactivate = true
+        hidesOnDeactivate = false
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
     }
 
     override var canBecomeKey: Bool {
         true
-    }
-
-    override func cancelOperation(_ sender: Any?) {
-        orderOut(nil)
     }
 }

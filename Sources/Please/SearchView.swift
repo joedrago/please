@@ -1,25 +1,24 @@
 import SwiftUI
 
 class SearchViewModel: ObservableObject {
-    @Published var query = ""
-    @Published var selectedIndex = 0
-    @Published var allApps: [AppInfo] = []
-
-    var filteredApps: [FuzzyMatcher.Match] {
-        let matches = FuzzyMatcher.filter(apps: allApps, query: query)
-        return Array(matches.prefix(Preferences.maxResults))
+    @Published var query = "" {
+        didSet { updateResults() }
     }
 
+    @Published var selectedIndex = 0
+    @Published var results: [FuzzyMatcher.Match] = []
+    private var allApps: [AppInfo] = []
+
     var selectedApp: AppInfo? {
-        let matches = filteredApps
-        guard selectedIndex >= 0, selectedIndex < matches.count else { return nil }
-        return matches[selectedIndex].app
+        guard selectedIndex >= 0, selectedIndex < results.count else { return nil }
+        return results[selectedIndex].app
     }
 
     func reset() {
+        allApps = AppFinder.findApplications()
         query = ""
         selectedIndex = 0
-        allApps = AppFinder.findApplications()
+        updateResults()
     }
 
     func moveUp() {
@@ -29,8 +28,7 @@ class SearchViewModel: ObservableObject {
     }
 
     func moveDown() {
-        let count = filteredApps.count
-        if selectedIndex < count - 1 {
+        if selectedIndex < results.count - 1 {
             selectedIndex += 1
         }
     }
@@ -39,6 +37,12 @@ class SearchViewModel: ObservableObject {
         guard let app = selectedApp else { return false }
         AppLauncher.launch(app)
         return true
+    }
+
+    private func updateResults() {
+        let matches = FuzzyMatcher.filter(apps: allApps, query: query)
+        results = Array(matches.prefix(Preferences.maxResults))
+        selectedIndex = 0
     }
 }
 
@@ -62,7 +66,11 @@ struct SearchView: View {
                     }
                 },
                 onEscape: {
-                    onDismiss()
+                    if viewModel.query.isEmpty {
+                        onDismiss()
+                    } else {
+                        viewModel.query = ""
+                    }
                 }
             )
             .padding(.horizontal, 24)
@@ -74,14 +82,14 @@ struct SearchView: View {
 
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(Array(viewModel.filteredApps.enumerated()), id: \.element.app.id) { index, match in
+                    VStack(spacing: 0) {
+                        ForEach(Array(viewModel.results.enumerated()), id: \.element.app.id) { index, match in
                             SearchResultRow(
                                 app: match.app,
                                 isSelected: index == viewModel.selectedIndex,
                                 fontSize: Preferences.fontSize
                             )
-                            .id(index)
+                            .id(match.app.id)
                             .onTapGesture {
                                 viewModel.selectedIndex = index
                                 if viewModel.launchSelected() {
@@ -92,16 +100,15 @@ struct SearchView: View {
                     }
                     .padding(.vertical, 4)
                 }
-                .onChange(of: viewModel.selectedIndex) { newIndex in
-                    withAnimation {
-                        proxy.scrollTo(newIndex, anchor: .center)
+                .onChange(of: viewModel.selectedIndex) { _ in
+                    if let app = viewModel.selectedApp {
+                        withAnimation {
+                            proxy.scrollTo(app.id, anchor: .center)
+                        }
                     }
                 }
             }
         }
         .frame(width: 680, height: 400)
-        .onChange(of: viewModel.query) { _ in
-            viewModel.selectedIndex = 0
-        }
     }
 }

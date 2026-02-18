@@ -18,10 +18,6 @@ struct SearchField: NSViewRepresentable {
         field.focusRingType = .none
         field.textColor = .white
         field.cell?.sendsActionOnEndEditing = false
-        field.onMoveUp = onMoveUp
-        field.onMoveDown = onMoveDown
-        field.onSubmit = onSubmit
-        field.onEscape = onEscape
 
         NotificationCenter.default.addObserver(
             context.coordinator,
@@ -37,10 +33,6 @@ struct SearchField: NSViewRepresentable {
         if nsView.stringValue != text {
             nsView.stringValue = text
         }
-        nsView.onMoveUp = onMoveUp
-        nsView.onMoveDown = onMoveDown
-        nsView.onSubmit = onSubmit
-        nsView.onEscape = onEscape
     }
 
     func makeCoordinator() -> Coordinator {
@@ -59,10 +51,34 @@ struct SearchField: NSViewRepresentable {
             parent.text = field.stringValue
         }
 
+        // Called by the field editor for command selectors (arrows, Return, Escape, etc.)
+        func control(
+            _ control: NSControl,
+            textView: NSTextView,
+            doCommandBy commandSelector: Selector
+        ) -> Bool {
+            if commandSelector == #selector(NSResponder.moveUp(_:)) {
+                parent.onMoveUp()
+                return true
+            }
+            if commandSelector == #selector(NSResponder.moveDown(_:)) {
+                parent.onMoveDown()
+                return true
+            }
+            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+                parent.onSubmit()
+                return true
+            }
+            if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+                parent.onEscape()
+                return true
+            }
+            return false
+        }
+
         @objc func panelDidAppear() {
             DispatchQueue.main.async { [weak self] in
                 guard let coordinator = self else { return }
-                // Find the text field in the responder chain
                 if let window = NSApp.keyWindow {
                     window.makeFirstResponder(
                         coordinator.findSearchField(in: window.contentView)
@@ -86,24 +102,4 @@ struct SearchField: NSViewRepresentable {
     }
 }
 
-class PleaseSearchTextField: NSTextField {
-    var onMoveUp: (() -> Void)?
-    var onMoveDown: (() -> Void)?
-    var onSubmit: (() -> Void)?
-    var onEscape: (() -> Void)?
-
-    override func keyDown(with event: NSEvent) {
-        switch event.keyCode {
-        case 125: // Down arrow
-            onMoveDown?()
-        case 126: // Up arrow
-            onMoveUp?()
-        case 36: // Return
-            onSubmit?()
-        case 53: // Escape
-            onEscape?()
-        default:
-            super.keyDown(with: event)
-        }
-    }
-}
+class PleaseSearchTextField: NSTextField {}
