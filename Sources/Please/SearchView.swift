@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 class SearchViewModel: ObservableObject {
@@ -8,6 +9,7 @@ class SearchViewModel: ObservableObject {
     @Published var selectedIndex = 0
     @Published var results: [FuzzyMatcher.Match] = []
     @Published var calculatorResult: String?
+    @Published var calculatorCopied = false
     private var allApps: [AppInfo] = []
 
     var selectedApp: AppInfo? {
@@ -20,6 +22,7 @@ class SearchViewModel: ObservableObject {
         query = ""
         selectedIndex = 0
         calculatorResult = nil
+        calculatorCopied = false
         updateResults()
     }
 
@@ -44,6 +47,18 @@ class SearchViewModel: ObservableObject {
     func launchSelected() -> Bool {
         guard let app = selectedApp else { return false }
         AppLauncher.launch(app)
+        return true
+    }
+
+    @discardableResult
+    func copyCalculatorResult() -> Bool {
+        guard let result = calculatorResult else { return false }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(result, forType: .string)
+        calculatorCopied = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            self?.calculatorCopied = false
+        }
         return true
     }
 
@@ -76,6 +91,8 @@ struct SearchView: View {
                 onSubmit: {
                     if viewModel.launchSelected() {
                         onDismiss()
+                    } else {
+                        viewModel.copyCalculatorResult()
                     }
                 },
                 onEscape: {
@@ -91,13 +108,14 @@ struct SearchView: View {
 
             if let result = viewModel.calculatorResult {
                 HStack {
-                    Text("= \(result)")
+                    Text(viewModel.calculatorCopied ? "= \(result)  — Copied!" : "= \(result)")
                         .font(.system(size: 18))
                         .foregroundColor(.white.opacity(0.5))
                     Spacer()
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 6)
+                .animation(.easeInOut(duration: 0.15), value: viewModel.calculatorCopied)
             }
 
             Divider()

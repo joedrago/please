@@ -14,6 +14,7 @@ Type what you want, and Please will find and open it for you.
 ```bash
 make          # Build the .app bundle
 make run      # Build and launch
+make install  # Build and install to /Applications
 make clean    # Remove build artifacts
 make lint     # Run SwiftLint (requires: brew install swiftlint)
 make format   # Run SwiftFormat (requires: brew install swiftformat)
