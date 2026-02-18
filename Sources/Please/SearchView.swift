@@ -10,6 +10,8 @@ class SearchViewModel: ObservableObject {
     @Published var results: [FuzzyMatcher.Match] = []
     @Published var calculatorResult: String?
     @Published var calculatorCopied = false
+    @Published var lowPriorityApps: Set<String> = Preferences.lowPriorityApps
+    @Published var highPriorityApps: Set<String> = Preferences.highPriorityApps
     private var allApps: [AppInfo] = []
 
     var selectedApp: AppInfo? {
@@ -62,12 +64,12 @@ class SearchViewModel: ObservableObject {
         return true
     }
 
-    private func updateResults() {
+    func updateResults() {
         if query.isEmpty {
             results = []
             calculatorResult = nil
         } else {
-            results = FuzzyMatcher.filter(apps: allApps, query: query)
+            results = FuzzyMatcher.filter(apps: allApps, query: query, lowPriorityIDs: lowPriorityApps, highPriorityIDs: highPriorityApps)
             calculatorResult = Preferences.calculatorEnabled ? ExpressionEvaluator.evaluate(query) : nil
         }
         selectedIndex = 0
@@ -129,6 +131,8 @@ struct SearchView: View {
                             SearchResultRow(
                                 app: match.app,
                                 isSelected: index == viewModel.selectedIndex,
+                                isLowPriority: viewModel.lowPriorityApps.contains(match.app.id),
+                                isHighPriority: viewModel.highPriorityApps.contains(match.app.id),
                                 fontSize: Preferences.fontSize
                             )
                             .id(match.app.id)
@@ -136,6 +140,26 @@ struct SearchView: View {
                                 viewModel.selectedIndex = index
                                 if viewModel.launchSelected() {
                                     onDismiss()
+                                }
+                            }
+                            .contextMenu {
+                                Button(viewModel.highPriorityApps.contains(match.app.id)
+                                    ? "Unmark High Priority"
+                                    : "Mark as High Priority")
+                                {
+                                    Preferences.toggleHighPriority(match.app.id)
+                                    viewModel.highPriorityApps = Preferences.highPriorityApps
+                                    viewModel.lowPriorityApps = Preferences.lowPriorityApps
+                                    viewModel.updateResults()
+                                }
+                                Button(viewModel.lowPriorityApps.contains(match.app.id)
+                                    ? "Unmark Low Priority"
+                                    : "Mark as Low Priority")
+                                {
+                                    Preferences.toggleLowPriority(match.app.id)
+                                    viewModel.lowPriorityApps = Preferences.lowPriorityApps
+                                    viewModel.highPriorityApps = Preferences.highPriorityApps
+                                    viewModel.updateResults()
                                 }
                             }
                         }

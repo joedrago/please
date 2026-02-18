@@ -89,7 +89,12 @@ enum FuzzyMatcher {
         return score
     }
 
-    static func filter(apps: [AppInfo], query: String) -> [Match] {
+    static func filter(
+        apps: [AppInfo],
+        query: String,
+        lowPriorityIDs: Set<String> = [],
+        highPriorityIDs: Set<String> = []
+    ) -> [Match] {
         guard !query.isEmpty else {
             return apps.map { Match(app: $0, score: 0) }
         }
@@ -99,6 +104,14 @@ enum FuzzyMatcher {
                 return Match(app: app, score: matchScore)
             }
             return nil
-        }.sorted { $0.score > $1.score }
+        }.sorted { a, b in
+            let aHigh = highPriorityIDs.contains(a.app.id)
+            let bHigh = highPriorityIDs.contains(b.app.id)
+            if aHigh != bHigh { return aHigh }
+            let aLow = lowPriorityIDs.contains(a.app.id)
+            let bLow = lowPriorityIDs.contains(b.app.id)
+            if aLow != bLow { return !aLow }
+            return a.score > b.score
+        }
     }
 }

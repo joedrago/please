@@ -3,6 +3,8 @@ import SwiftUI
 struct SearchResultRow: View {
     let app: AppInfo
     let isSelected: Bool
+    let isLowPriority: Bool
+    let isHighPriority: Bool
     let fontSize: CGFloat
     @State private var isHovered = false
 
@@ -16,6 +18,16 @@ struct SearchResultRow: View {
                 .font(.system(size: fontSize))
                 .foregroundColor(.white)
                 .lineLimit(1)
+
+            if isHighPriority {
+                Image(systemName: "arrow.up")
+                    .foregroundColor(.orange)
+                    .font(.system(size: fontSize * 0.7))
+            } else if isLowPriority {
+                Image(systemName: "arrow.down")
+                    .foregroundColor(.green)
+                    .font(.system(size: fontSize * 0.7))
+            }
 
             Spacer()
         }

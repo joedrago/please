@@ -7,6 +7,8 @@ enum Preferences {
         static let maxResults = "maxResults"
         static let fontSize = "fontSize"
         static let calculatorEnabled = "calculatorEnabled"
+        static let lowPriorityApps = "lowPriorityApps"
+        static let highPriorityApps = "highPriorityApps"
     }
 
     static func registerDefaults() {
@@ -30,5 +32,41 @@ enum Preferences {
     static var calculatorEnabled: Bool {
         get { defaults.bool(forKey: Key.calculatorEnabled) }
         set { defaults.set(newValue, forKey: Key.calculatorEnabled) }
+    }
+
+    static var lowPriorityApps: Set<String> {
+        get { Set(defaults.stringArray(forKey: Key.lowPriorityApps) ?? []) }
+        set { defaults.set(Array(newValue), forKey: Key.lowPriorityApps) }
+    }
+
+    static func toggleLowPriority(_ appID: String) {
+        var apps = lowPriorityApps
+        if apps.contains(appID) {
+            apps.remove(appID)
+        } else {
+            var high = highPriorityApps
+            high.remove(appID)
+            highPriorityApps = high
+            apps.insert(appID)
+        }
+        lowPriorityApps = apps
+    }
+
+    static var highPriorityApps: Set<String> {
+        get { Set(defaults.stringArray(forKey: Key.highPriorityApps) ?? []) }
+        set { defaults.set(Array(newValue), forKey: Key.highPriorityApps) }
+    }
+
+    static func toggleHighPriority(_ appID: String) {
+        var apps = highPriorityApps
+        if apps.contains(appID) {
+            apps.remove(appID)
+        } else {
+            var low = lowPriorityApps
+            low.remove(appID)
+            lowPriorityApps = low
+            apps.insert(appID)
+        }
+        highPriorityApps = apps
     }
 }
