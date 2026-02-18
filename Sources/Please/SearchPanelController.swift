@@ -31,7 +31,12 @@ class SearchPanelController: NSObject, NSWindowDelegate {
 
         guard let panel else { return }
 
-        panel.setContentSize(NSSize(width: Self.panelWidth, height: panelHeight))
+        let size = NSSize(width: Self.panelWidth, height: panelHeight)
+        panel.setContentSize(size)
+        if let effectView = panel.contentView as? NSVisualEffectView {
+            effectView.maskImage = Self.roundedMask(size: size, radius: 20)
+        }
+        panel.invalidateShadow()
         positionPanel(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -65,8 +70,9 @@ class SearchPanelController: NSObject, NSWindowDelegate {
         effectView.blendingMode = .behindWindow
         effectView.state = .active
         effectView.wantsLayer = true
-        effectView.layer?.cornerRadius = 12
+        effectView.layer?.cornerRadius = 20
         effectView.layer?.masksToBounds = true
+        effectView.maskImage = Self.roundedMask(size: panelRect.size, radius: 20)
 
         let rootView = SearchView(viewModel: viewModel) { [weak self] in
             self?.hide()
@@ -79,6 +85,13 @@ class SearchPanelController: NSObject, NSWindowDelegate {
         newPanel.contentView = effectView
 
         panel = newPanel
+    }
+
+    private static func roundedMask(size: NSSize, radius: CGFloat) -> NSImage {
+        NSImage(size: size, flipped: false) { rect in
+            NSBezierPath(roundedRect: rect, xRadius: radius, yRadius: radius).fill()
+            return true
+        }
     }
 
     private func positionPanel(_ panel: SearchPanel) {
