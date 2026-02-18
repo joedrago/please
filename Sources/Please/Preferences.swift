@@ -7,6 +7,7 @@ enum Preferences {
         static let maxResults = "maxResults"
         static let fontSize = "fontSize"
         static let calculatorEnabled = "calculatorEnabled"
+        static let fuzzySearch = "fuzzySearch"
         static let lowPriorityApps = "lowPriorityApps"
         static let highPriorityApps = "highPriorityApps"
     }
@@ -16,6 +17,7 @@ enum Preferences {
             Key.maxResults: 5,
             Key.fontSize: 16,
             Key.calculatorEnabled: false,
+            Key.fuzzySearch: true,
         ])
     }
 
@@ -32,6 +34,11 @@ enum Preferences {
     static var calculatorEnabled: Bool {
         get { defaults.bool(forKey: Key.calculatorEnabled) }
         set { defaults.set(newValue, forKey: Key.calculatorEnabled) }
+    }
+
+    static var fuzzySearch: Bool {
+        get { defaults.bool(forKey: Key.fuzzySearch) }
+        set { defaults.set(newValue, forKey: Key.fuzzySearch) }
     }
 
     static var lowPriorityApps: Set<String> {

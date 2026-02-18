@@ -69,7 +69,7 @@ class SearchViewModel: ObservableObject {
             results = []
             calculatorResult = nil
         } else {
-            results = FuzzyMatcher.filter(apps: allApps, query: query, lowPriorityIDs: lowPriorityApps, highPriorityIDs: highPriorityApps)
+            results = FuzzyMatcher.filter(apps: allApps, query: query, fuzzy: Preferences.fuzzySearch, lowPriorityIDs: lowPriorityApps, highPriorityIDs: highPriorityApps)
             calculatorResult = Preferences.calculatorEnabled ? ExpressionEvaluator.evaluate(query) : nil
         }
         selectedIndex = 0

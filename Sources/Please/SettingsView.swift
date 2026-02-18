@@ -5,6 +5,7 @@ import SwiftUI
 struct SettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var calculatorEnabled = Preferences.calculatorEnabled
+    @State private var fuzzySearch = Preferences.fuzzySearch
     @State private var maxResults = Preferences.maxResults
     @State private var fontSize = Int(Preferences.fontSize)
 
@@ -23,6 +24,11 @@ struct SettingsView: View {
                             NSLog("Failed to update login item: \(error)")
                             launchAtLogin = SMAppService.mainApp.status == .enabled
                         }
+                    }
+
+                Toggle("Fuzzy search", isOn: $fuzzySearch)
+                    .onChange(of: fuzzySearch) { newValue in
+                        Preferences.fuzzySearch = newValue
                     }
 
                 Toggle("Built-in calculator", isOn: $calculatorEnabled)

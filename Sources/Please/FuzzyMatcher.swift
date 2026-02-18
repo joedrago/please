@@ -92,6 +92,7 @@ enum FuzzyMatcher {
     static func filter(
         apps: [AppInfo],
         query: String,
+        fuzzy: Bool = true,
         lowPriorityIDs: Set<String> = [],
         highPriorityIDs: Set<String> = []
     ) -> [Match] {
@@ -100,8 +101,14 @@ enum FuzzyMatcher {
         }
 
         return apps.compactMap { app in
-            if let matchScore = score(query: query, target: app.name) {
-                return Match(app: app, score: matchScore)
+            if fuzzy {
+                if let matchScore = score(query: query, target: app.name) {
+                    return Match(app: app, score: matchScore)
+                }
+            } else {
+                if app.name.lowercased().hasPrefix(query.lowercased()) {
+                    return Match(app: app, score: 0)
+                }
             }
             return nil
         }.sorted { a, b in
