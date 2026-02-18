@@ -51,8 +51,8 @@ struct SearchField: NSViewRepresentable {
             parent.text = field.stringValue
         }
 
-        // Called by the field editor for command selectors (arrows, Return, Escape, etc.)
-        // Return true = we handled it; false = let the field editor handle it normally.
+        /// Called by the field editor for command selectors (arrows, Return, Escape, etc.)
+        /// Return true = we handled it; false = let the field editor handle it normally.
         func control(
             _ control: NSControl,
             textView: NSTextView,

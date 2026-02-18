@@ -56,7 +56,7 @@ enum AppFinder {
         ]
         .compactMap { $0 }
         .first { !$0.isEmpty }
-            ?? fallback
+        ?? fallback
 
         let icon = NSWorkspace.shared.icon(forFile: url.path)
         icon.size = NSSize(width: 32, height: 32)
