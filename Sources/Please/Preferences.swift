@@ -95,10 +95,77 @@ enum Preferences {
         highPriorityApps = apps
     }
 
+    // MARK: - Hotkey String Conversion
+
+    private static let keyNames: [(code: Int, name: String)] = [
+        (0, "a"), (1, "s"), (2, "d"), (3, "f"), (4, "h"), (5, "g"), (6, "z"), (7, "x"),
+        (8, "c"), (9, "v"), (11, "b"), (12, "q"), (13, "w"), (14, "e"), (15, "r"),
+        (16, "y"), (17, "t"), (18, "1"), (19, "2"), (20, "3"), (21, "4"), (22, "6"),
+        (23, "5"), (24, "="), (25, "9"), (26, "7"), (27, "-"), (28, "8"), (29, "0"),
+        (30, "]"), (31, "o"), (32, "u"), (33, "["), (34, "i"), (35, "p"), (36, "return"),
+        (37, "l"), (38, "j"), (39, "'"), (40, "k"), (41, ";"), (42, "\\"), (43, ","),
+        (44, "/"), (45, "n"), (46, "m"), (47, "."), (48, "tab"), (49, "space"),
+        (50, "`"), (51, "delete"), (53, "escape"),
+        (96, "f5"), (97, "f6"), (98, "f7"), (99, "f3"), (100, "f8"), (101, "f9"),
+        (103, "f11"), (105, "f13"), (107, "f14"), (109, "f10"), (111, "f12"), (113, "f15"),
+        (115, "home"), (116, "pageup"), (117, "forwarddelete"), (118, "f4"), (119, "end"),
+        (120, "f2"), (121, "pagedown"), (122, "f1"),
+        (123, "left"), (124, "right"), (125, "down"), (126, "up"),
+    ]
+
+    private static let codeToName: [Int: String] = Dictionary(
+        uniqueKeysWithValues: keyNames.map { ($0.code, $0.name) }
+    )
+    private static let nameToCode: [String: Int] = Dictionary(
+        uniqueKeysWithValues: keyNames.map { ($0.name, $0.code) }
+    )
+
+    private static let modifierFlags: [(carbon: Int, name: String)] = [
+        (4096, "control"), (2048, "option"), (512, "shift"), (256, "command"),
+    ]
+
+    private static func hotkeyToString(_ shortcut: KeyboardShortcuts.Shortcut) -> String {
+        var parts: [String] = []
+        for (carbon, name) in modifierFlags where shortcut.carbonModifiers & carbon != 0 {
+            parts.append(name)
+        }
+        if let name = codeToName[shortcut.carbonKeyCode] {
+            parts.append(name)
+        } else {
+            parts.append("keycode_\(shortcut.carbonKeyCode)")
+        }
+        return parts.joined(separator: "+")
+    }
+
+    private static func hotkeyFromString(_ string: String) -> KeyboardShortcuts.Shortcut? {
+        let parts = string.lowercased().split(separator: "+").map(String.init)
+        guard let keyPart = parts.last else { return nil }
+
+        let modLookup = Dictionary(uniqueKeysWithValues: modifierFlags.map { ($0.name, $0.carbon) })
+        var carbonMods = 0
+        for part in parts.dropLast() {
+            guard let flag = modLookup[part] else { return nil }
+            carbonMods |= flag
+        }
+
+        let keyCode: Int
+        if let code = nameToCode[keyPart] {
+            keyCode = code
+        } else if keyPart.hasPrefix("keycode_"), let code = Int(keyPart.dropFirst(8)) {
+            keyCode = code
+        } else {
+            return nil
+        }
+
+        return KeyboardShortcuts.Shortcut(carbonKeyCode: keyCode, carbonModifiers: carbonMods)
+    }
+
     // MARK: - Import / Export / Reset
 
+    private static let hotkeyKey = "hotkey"
+
     static func exportAll(launchAtLogin: Bool) -> Data? {
-        let dict: [String: Any] = [
+        var dict: [String: Any] = [
             Key.launchAtLogin: launchAtLogin,
             Key.maxResults: maxResults,
             Key.fontSize: Int(fontSize),
@@ -108,6 +175,9 @@ enum Preferences {
             Key.highPriorityApps: highPriorityApps.sorted(),
             Key.appAliases: appAliases,
         ]
+        if let shortcut = KeyboardShortcuts.getShortcut(for: .toggleSearch) {
+            dict[hotkeyKey] = hotkeyToString(shortcut)
+        }
         return try? JSONSerialization.data(
             withJSONObject: dict, options: [.prettyPrinted, .sortedKeys]
         )
@@ -145,6 +215,10 @@ enum Preferences {
             for (appID, alias) in aliases {
                 setAlias(alias, for: appID)
             }
+        }
+
+        if let str = dict[hotkeyKey] as? String, let shortcut = hotkeyFromString(str) {
+            KeyboardShortcuts.setShortcut(shortcut, for: .toggleSearch)
         }
 
         return dict[Key.launchAtLogin] as? Bool
