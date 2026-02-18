@@ -4,6 +4,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @State private var calculatorEnabled = Preferences.calculatorEnabled
     @State private var maxResults = Preferences.maxResults
     @State private var fontSize = Int(Preferences.fontSize)
 
@@ -22,6 +23,11 @@ struct SettingsView: View {
                             NSLog("Failed to update login item: \(error)")
                             launchAtLogin = SMAppService.mainApp.status == .enabled
                         }
+                    }
+
+                Toggle("Built-in calculator", isOn: $calculatorEnabled)
+                    .onChange(of: calculatorEnabled) { newValue in
+                        Preferences.calculatorEnabled = newValue
                     }
             }
 
@@ -54,7 +60,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 360, height: 340)
+        .frame(width: 360, height: 420)
         .onAppear {
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }

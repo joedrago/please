@@ -7,6 +7,7 @@ class SearchViewModel: ObservableObject {
 
     @Published var selectedIndex = 0
     @Published var results: [FuzzyMatcher.Match] = []
+    @Published var calculatorResult: String?
     private var allApps: [AppInfo] = []
 
     var selectedApp: AppInfo? {
@@ -18,6 +19,7 @@ class SearchViewModel: ObservableObject {
         allApps = AppFinder.findApplications()
         query = ""
         selectedIndex = 0
+        calculatorResult = nil
         updateResults()
     }
 
@@ -48,8 +50,10 @@ class SearchViewModel: ObservableObject {
     private func updateResults() {
         if query.isEmpty {
             results = []
+            calculatorResult = nil
         } else {
             results = FuzzyMatcher.filter(apps: allApps, query: query)
+            calculatorResult = Preferences.calculatorEnabled ? ExpressionEvaluator.evaluate(query) : nil
         }
         selectedIndex = 0
     }
@@ -84,6 +88,17 @@ struct SearchView: View {
             )
             .padding(.horizontal, 24)
             .padding(.top, 12)
+
+            if let result = viewModel.calculatorResult {
+                HStack {
+                    Text("= \(result)")
+                        .font(.system(size: 18))
+                        .foregroundColor(.white.opacity(0.5))
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 6)
+            }
 
             Divider()
                 .padding(.horizontal, 16)
