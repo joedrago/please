@@ -1,4 +1,5 @@
 import Foundation
+import KeyboardShortcuts
 
 enum Preferences {
     private static let defaults = UserDefaults.standard
@@ -11,6 +12,7 @@ enum Preferences {
         static let lowPriorityApps = "lowPriorityApps"
         static let highPriorityApps = "highPriorityApps"
         static let appAliases = "appAliases"
+        static let launchAtLogin = "launchAtLogin"
     }
 
     static func registerDefaults() {
@@ -91,5 +93,76 @@ enum Preferences {
             apps.insert(appID)
         }
         highPriorityApps = apps
+    }
+
+    // MARK: - Import / Export / Reset
+
+    static func exportAll(launchAtLogin: Bool) -> Data? {
+        let dict: [String: Any] = [
+            Key.launchAtLogin: launchAtLogin,
+            Key.maxResults: maxResults,
+            Key.fontSize: Int(fontSize),
+            Key.calculatorEnabled: calculatorEnabled,
+            Key.fuzzySearch: fuzzySearch,
+            Key.lowPriorityApps: lowPriorityApps.sorted(),
+            Key.highPriorityApps: highPriorityApps.sorted(),
+            Key.appAliases: appAliases,
+        ]
+        return try? JSONSerialization.data(
+            withJSONObject: dict, options: [.prettyPrinted, .sortedKeys]
+        )
+    }
+
+    /// Imports settings from JSON data. Returns the launchAtLogin value if present
+    /// (caller must apply it via SMAppService).
+    @discardableResult
+    static func importFrom(_ data: Data) throws -> Bool? {
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(
+                domain: "Preferences", code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid JSON — expected a dictionary"]
+            )
+        }
+
+        if let v = dict[Key.maxResults] as? Int { maxResults = v }
+        if let v = dict[Key.fontSize] as? Int { fontSize = CGFloat(v) }
+        if let v = dict[Key.calculatorEnabled] as? Bool { calculatorEnabled = v }
+        if let v = dict[Key.fuzzySearch] as? Bool { fuzzySearch = v }
+
+        if let arr = dict[Key.lowPriorityApps] as? [String] {
+            for appID in arr where !lowPriorityApps.contains(appID) {
+                toggleLowPriority(appID)
+            }
+        }
+
+        if let arr = dict[Key.highPriorityApps] as? [String] {
+            for appID in arr where !highPriorityApps.contains(appID) {
+                toggleHighPriority(appID)
+            }
+        }
+
+        if let aliases = dict[Key.appAliases] as? [String: String] {
+            for (appID, alias) in aliases {
+                setAlias(alias, for: appID)
+            }
+        }
+
+        return dict[Key.launchAtLogin] as? Bool
+    }
+
+    static func resetAll() {
+        // Scalar settings — remove so registerDefaults() takes effect
+        defaults.removeObject(forKey: Key.maxResults)
+        defaults.removeObject(forKey: Key.fontSize)
+        defaults.removeObject(forKey: Key.calculatorEnabled)
+        defaults.removeObject(forKey: Key.fuzzySearch)
+
+        // Collection settings — write empty values explicitly
+        lowPriorityApps = []
+        highPriorityApps = []
+        appAliases = [:]
+
+        registerDefaults()
+        KeyboardShortcuts.reset(.toggleSearch)
     }
 }

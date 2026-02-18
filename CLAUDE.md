@@ -40,5 +40,5 @@ make format   # SwiftFormat
 ## Adding Features
 
 - New search sources: add to `AppFinder.findApplications()` or create a parallel finder
-- New settings: add key to `Preferences`, add control to `SettingsView`
+- New settings: add key to `Preferences`, add control to `SettingsView`. Increase the `.frame(height:)` in `SettingsView` to fit the new controls.
 - New hotkeys: extend `KeyboardShortcuts.Name` in `HotkeyManager.swift`
