@@ -21,11 +21,11 @@ bundle: build
 all: bundle
 
 run: bundle
-	-pkill -x $(APP_NAME)
+	-pkill -x $(APP_NAME) && while pgrep -x $(APP_NAME) >/dev/null; do sleep 0.1; done
 	open $(APP_BUNDLE)
 
 install: bundle
-	-pkill -x $(APP_NAME)
+	-pkill -x $(APP_NAME) && while pgrep -x $(APP_NAME) >/dev/null; do sleep 0.1; done
 	rm -rf /Applications/$(APP_BUNDLE)
 	cp -a $(APP_BUNDLE) /Applications/$(APP_BUNDLE)
 	open /Applications/$(APP_BUNDLE)
