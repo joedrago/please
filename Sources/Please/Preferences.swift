@@ -10,6 +10,7 @@ enum Preferences {
         static let fuzzySearch = "fuzzySearch"
         static let lowPriorityApps = "lowPriorityApps"
         static let highPriorityApps = "highPriorityApps"
+        static let appAliases = "appAliases"
     }
 
     static func registerDefaults() {
@@ -62,6 +63,21 @@ enum Preferences {
     static var highPriorityApps: Set<String> {
         get { Set(defaults.stringArray(forKey: Key.highPriorityApps) ?? []) }
         set { defaults.set(Array(newValue), forKey: Key.highPriorityApps) }
+    }
+
+    static var appAliases: [String: String] {
+        get { defaults.dictionary(forKey: Key.appAliases) as? [String: String] ?? [:] }
+        set { defaults.set(newValue, forKey: Key.appAliases) }
+    }
+
+    static func setAlias(_ alias: String?, for appID: String) {
+        var aliases = appAliases
+        if let alias = alias, !alias.isEmpty {
+            aliases[appID] = alias
+        } else {
+            aliases.removeValue(forKey: appID)
+        }
+        appAliases = aliases
     }
 
     static func toggleHighPriority(_ appID: String) {

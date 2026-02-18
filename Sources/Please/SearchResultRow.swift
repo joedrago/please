@@ -5,6 +5,7 @@ struct SearchResultRow: View {
     let isSelected: Bool
     let isLowPriority: Bool
     let isHighPriority: Bool
+    let alias: String?
     let fontSize: CGFloat
     @State private var isHovered = false
 
@@ -18,6 +19,13 @@ struct SearchResultRow: View {
                 .font(.system(size: fontSize))
                 .foregroundColor(.white)
                 .lineLimit(1)
+
+            if let alias = alias {
+                Text("\"\(alias)\"")
+                    .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: fontSize * 0.85))
+                    .lineLimit(1)
+            }
 
             if isHighPriority {
                 Image(systemName: "arrow.up")

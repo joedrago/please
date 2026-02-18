@@ -12,6 +12,7 @@ class SearchViewModel: ObservableObject {
     @Published var calculatorCopied = false
     @Published var lowPriorityApps: Set<String> = Preferences.lowPriorityApps
     @Published var highPriorityApps: Set<String> = Preferences.highPriorityApps
+    @Published var appAliases: [String: String] = Preferences.appAliases
     private var allApps: [AppInfo] = []
 
     var selectedApp: AppInfo? {
@@ -69,7 +70,14 @@ class SearchViewModel: ObservableObject {
             results = []
             calculatorResult = nil
         } else {
-            results = FuzzyMatcher.filter(apps: allApps, query: query, fuzzy: Preferences.fuzzySearch, lowPriorityIDs: lowPriorityApps, highPriorityIDs: highPriorityApps)
+            results = FuzzyMatcher.filter(
+                apps: allApps,
+                query: query,
+                fuzzy: Preferences.fuzzySearch,
+                lowPriorityIDs: lowPriorityApps,
+                highPriorityIDs: highPriorityApps,
+                aliases: appAliases
+            )
             calculatorResult = Preferences.calculatorEnabled ? ExpressionEvaluator.evaluate(query) : nil
         }
         selectedIndex = 0
@@ -79,7 +87,6 @@ class SearchViewModel: ObservableObject {
 struct SearchView: View {
     @ObservedObject var viewModel: SearchViewModel
     var onDismiss: () -> Void
-
     var body: some View {
         VStack(spacing: 0) {
             PleaseSentenceView(appName: viewModel.selectedApp?.name)
@@ -133,6 +140,7 @@ struct SearchView: View {
                                 isSelected: index == viewModel.selectedIndex,
                                 isLowPriority: viewModel.lowPriorityApps.contains(match.app.id),
                                 isHighPriority: viewModel.highPriorityApps.contains(match.app.id),
+                                alias: viewModel.appAliases[match.app.id],
                                 fontSize: Preferences.fontSize
                             )
                             .id(match.app.id)
@@ -143,6 +151,18 @@ struct SearchView: View {
                                 }
                             }
                             .contextMenu {
+                                Button("Set Alias...") {
+                                    let appID = match.app.id
+                                    let appName = match.app.name
+                                    let current = viewModel.appAliases[appID]
+                                    DispatchQueue.main.async {
+                                        Self.showAliasAlert(appName: appName, current: current) { newAlias in
+                                            Preferences.setAlias(newAlias, for: appID)
+                                            viewModel.appAliases = Preferences.appAliases
+                                            viewModel.updateResults()
+                                        }
+                                    }
+                                }
                                 Button(viewModel.highPriorityApps.contains(match.app.id)
                                     ? "Unmark High Priority"
                                     : "Mark as High Priority")
@@ -176,5 +196,33 @@ struct SearchView: View {
             }
         }
         .frame(width: 680)
+    }
+
+    private static func showAliasAlert(
+        appName: String,
+        current: String?,
+        completion: @escaping (String?) -> Void
+    ) {
+        let alert = NSAlert()
+        alert.messageText = "Set alias for \(appName)"
+        alert.addButton(withTitle: "Set")
+        alert.addButton(withTitle: "Cancel")
+        if current != nil {
+            alert.addButton(withTitle: "Clear")
+        }
+
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = current ?? ""
+        field.placeholderString = "Alias"
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            let text = field.stringValue.trimmingCharacters(in: .whitespaces)
+            completion(text.isEmpty ? nil : text)
+        } else if response == .alertThirdButtonReturn {
+            completion(nil)
+        }
     }
 }

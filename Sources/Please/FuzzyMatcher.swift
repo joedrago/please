@@ -94,19 +94,26 @@ enum FuzzyMatcher {
         query: String,
         fuzzy: Bool = true,
         lowPriorityIDs: Set<String> = [],
-        highPriorityIDs: Set<String> = []
+        highPriorityIDs: Set<String> = [],
+        aliases: [String: String] = [:]
     ) -> [Match] {
         guard !query.isEmpty else {
             return apps.map { Match(app: $0, score: 0) }
         }
 
         return apps.compactMap { app in
+            let alias = aliases[app.id]
             if fuzzy {
-                if let matchScore = score(query: query, target: app.name) {
-                    return Match(app: app, score: matchScore)
+                let nameScore = score(query: query, target: app.name)
+                let aliasScore = alias.flatMap { score(query: query, target: $0) }
+                if let best = [nameScore, aliasScore].compactMap({ $0 }).max() {
+                    return Match(app: app, score: best)
                 }
             } else {
-                if app.name.lowercased().hasPrefix(query.lowercased()) {
+                let queryLower = query.lowercased()
+                if app.name.lowercased().hasPrefix(queryLower) ||
+                    (alias?.lowercased().hasPrefix(queryLower) ?? false)
+                {
                     return Match(app: app, score: 0)
                 }
             }
