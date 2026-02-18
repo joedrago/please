@@ -34,19 +34,27 @@ struct SettingsView: View {
             }
 
             Section("Appearance") {
-                Stepper("Max results: \(maxResults)", value: $maxResults, in: 3 ... 20)
-                    .onChange(of: maxResults) { newValue in
-                        Preferences.maxResults = newValue
+                Picker("Max visible results", selection: $maxResults) {
+                    ForEach(3 ... 20, id: \.self) { n in
+                        Text("\(n)").tag(n)
                     }
+                }
+                .onChange(of: maxResults) { newValue in
+                    Preferences.maxResults = newValue
+                }
 
-                Stepper("Font size: \(fontSize)pt", value: $fontSize, in: 10 ... 24)
-                    .onChange(of: fontSize) { newValue in
-                        Preferences.fontSize = CGFloat(newValue)
+                Picker("Font size", selection: $fontSize) {
+                    ForEach(10 ... 24, id: \.self) { n in
+                        Text("\(n)pt").tag(n)
                     }
+                }
+                .onChange(of: fontSize) { newValue in
+                    Preferences.fontSize = CGFloat(newValue)
+                }
             }
         }
         .formStyle(.grouped)
-        .frame(width: 360, height: 240)
+        .frame(width: 360, height: 340)
         .onAppear {
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }

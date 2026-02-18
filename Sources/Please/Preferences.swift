@@ -10,7 +10,7 @@ enum Preferences {
 
     static func registerDefaults() {
         defaults.register(defaults: [
-            Key.maxResults: 8,
+            Key.maxResults: 5,
             Key.fontSize: 16,
         ])
     }

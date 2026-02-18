@@ -5,7 +5,7 @@ CONTENTS_DIR = $(APP_BUNDLE)/Contents
 MACOS_DIR = $(CONTENTS_DIR)/MacOS
 RESOURCES_DIR = $(CONTENTS_DIR)/Resources
 
-.PHONY: build bundle run clean lint format format-check
+.PHONY: build bundle run install clean lint format format-check
 
 build:
 	swift build -c release
@@ -23,6 +23,12 @@ all: bundle
 run: bundle
 	-pkill -x $(APP_NAME)
 	open $(APP_BUNDLE)
+
+install: bundle
+	-pkill -x $(APP_NAME)
+	rm -rf /Applications/$(APP_BUNDLE)
+	cp -a $(APP_BUNDLE) /Applications/$(APP_BUNDLE)
+	open /Applications/$(APP_BUNDLE)
 
 clean:
 	swift package clean
