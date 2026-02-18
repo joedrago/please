@@ -20,7 +20,7 @@ let package = Package(
             name: "Please",
             dependencies: ["KeyboardShortcuts", "ObjCExceptionCatcher"],
             path: "Sources/Please",
-            exclude: ["Resources/Info.plist"],
+            exclude: ["Resources/Info.plist", "Resources/AppIcon.icns"],
             swiftSettings: [
                 .swiftLanguageMode(.v5),
             ]

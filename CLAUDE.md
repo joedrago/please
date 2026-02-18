@@ -15,6 +15,10 @@ make run      # Build and launch
 make clean    # Remove build artifacts
 make lint     # SwiftLint
 make format   # SwiftFormat
+make icon     # Regenerate AppIcon.icns from scripts
+make sign     # Code-sign the .app (requires DEVELOPER_ID)
+make notarize # Sign + notarize the .app (requires NOTARY_PROFILE)
+make dmg      # Full release: sign, notarize, build DMG
 ```
 
 ## Key Files
@@ -29,6 +33,9 @@ make format   # SwiftFormat
 - `HotkeyManager.swift` — KeyboardShortcuts integration (Option+Space default)
 - `Preferences.swift` — UserDefaults keys (maxResults, fontSize)
 - `SettingsView.swift` — SwiftUI Form with launch-at-login, hotkey recorder, appearance
+- `scripts/generate-icon.swift` — Standalone Swift script that draws the app icon (1024x1024 PNG)
+- `scripts/generate-icns.sh` — Converts PNG to `.icns` via `sips` + `iconutil`
+- `scripts/dmgbuildSettings.py` — Settings for `dmgbuild` (DMG installer layout)
 
 ## Conventions
 
@@ -36,6 +43,12 @@ make format   # SwiftFormat
 - Single external dependency: KeyboardShortcuts
 - Re-scans apps on every search panel open (no caching)
 - SMAppService for launch-at-login (macOS 13+)
+
+## Release / Code Signing
+
+- `make dmg DEVELOPER_ID="Developer ID Application: Your Name (TEAMID)"` — full release pipeline
+- Notarization requires a stored keychain profile: `xcrun notarytool store-credentials "please-notary"`
+- `dmgbuild` (Python) must be installed: `pip install dmgbuild`
 
 ## Adding Features
 

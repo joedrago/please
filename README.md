@@ -31,6 +31,63 @@ make format   # Run SwiftFormat (requires: brew install swiftformat)
    - Max search results (3–20)
    - Font size (10–24pt)
 
+## Releasing a Signed DMG
+
+`make dmg` builds, signs, notarizes, and packages the app into an installer DMG. This requires a one-time setup.
+
+### 1. Set your Developer ID
+
+Find your signing identity (requires a "Developer ID Application" certificate from Apple):
+
+```bash
+security find-identity -v -p codesigning | grep "Developer ID Application"
+```
+
+This prints something like:
+
+```
+1) ABCDEF1234... "Developer ID Application: Your Name (XXXXXXXXXX)"
+```
+
+Save the quoted string to `~/.appledevid`:
+
+```bash
+security find-identity -v -p codesigning \
+  | grep "Developer ID Application" \
+  | head -1 \
+  | sed 's/.*"\(.*\)".*/\1/' > ~/.appledevid
+```
+
+Verify it looks right:
+
+```bash
+cat ~/.appledevid
+# Should show: Developer ID Application: Your Name (XXXXXXXXXX)
+```
+
+### 2. Store notarization credentials
+
+Apple notarization requires an app-specific password. Generate one at [appleid.apple.com](https://appleid.apple.com/) under Sign-In and Security → App-Specific Passwords.
+
+Then store the credentials in your keychain:
+
+```bash
+xcrun notarytool store-credentials "please-notary" \
+    --apple-id "your@email.com" \
+    --team-id "XXXXXXXXXX" \
+    --password "xxxx-xxxx-xxxx-xxxx"
+```
+
+The team ID is the 10-character string in parentheses from your Developer ID (step 1). The `please-notary` profile name matches what the Makefile expects.
+
+### 3. Build the DMG
+
+```bash
+make dmg
+```
+
+This runs the full pipeline: `build` → `bundle` → `sign` → `notarize` → `dmg`. The venv and `dmgbuild` are installed automatically on first run. The output is `Please-<version>.dmg`.
+
 ## How It Works
 
 - Scans `/Applications`, `/System/Applications`, and `~/Applications` (including one level of subdirectories like Utilities/)

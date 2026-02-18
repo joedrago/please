@@ -7,3 +7,8 @@ DerivedData/
 .swiftpm/
 Please.app
 *.xcodeproj
+*.dmg
+*.zip
+.venv/
+scripts/icon_1024.png
+scripts/*.iconset/
