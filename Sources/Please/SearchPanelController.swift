@@ -14,6 +14,14 @@ class SearchPanelController: NSObject, NSWindowDelegate {
         }
     }
 
+    private static let panelWidth: CGFloat = 680
+    private static let headerHeight: CGFloat = 110
+    private static let rowHeight: CGFloat = 40
+
+    private var panelHeight: CGFloat {
+        Self.headerHeight + CGFloat(Preferences.maxResults) * Self.rowHeight
+    }
+
     func show() {
         viewModel.reset()
 
@@ -23,6 +31,7 @@ class SearchPanelController: NSObject, NSWindowDelegate {
 
         guard let panel else { return }
 
+        panel.setContentSize(NSSize(width: Self.panelWidth, height: panelHeight))
         positionPanel(panel)
         panel.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -47,7 +56,7 @@ class SearchPanelController: NSObject, NSWindowDelegate {
     }
 
     private func createPanel() {
-        let panelRect = NSRect(x: 0, y: 0, width: 680, height: 400)
+        let panelRect = NSRect(x: 0, y: 0, width: Self.panelWidth, height: panelHeight)
         let newPanel = SearchPanel(contentRect: panelRect)
         newPanel.delegate = self
 

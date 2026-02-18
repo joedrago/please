@@ -52,28 +52,31 @@ struct SearchField: NSViewRepresentable {
         }
 
         // Called by the field editor for command selectors (arrows, Return, Escape, etc.)
+        // Return true = we handled it; false = let the field editor handle it normally.
         func control(
             _ control: NSControl,
             textView: NSTextView,
             doCommandBy commandSelector: Selector
         ) -> Bool {
-            if commandSelector == #selector(NSResponder.moveUp(_:)) {
+            switch commandSelector {
+            case #selector(NSResponder.moveUp(_:)):
                 parent.onMoveUp()
                 return true
-            }
-            if commandSelector == #selector(NSResponder.moveDown(_:)) {
+            case #selector(NSResponder.moveDown(_:)):
                 parent.onMoveDown()
                 return true
-            }
-            if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+            case #selector(NSResponder.insertNewline(_:)):
                 parent.onSubmit()
                 return true
-            }
-            if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+            case #selector(NSResponder.cancelOperation(_:)):
                 parent.onEscape()
                 return true
+            default:
+                // Everything else (selectAll:, cut:, copy:, paste:,
+                // moveLeft:, moveRight:, deleteBackward:, etc.)
+                // passes through to the field editor.
+                return false
             }
-            return false
         }
 
         @objc func panelDidAppear() {

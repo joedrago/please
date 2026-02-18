@@ -22,14 +22,20 @@ class SearchViewModel: ObservableObject {
     }
 
     func moveUp() {
+        guard !results.isEmpty else { return }
         if selectedIndex > 0 {
             selectedIndex -= 1
+        } else {
+            selectedIndex = results.count - 1
         }
     }
 
     func moveDown() {
+        guard !results.isEmpty else { return }
         if selectedIndex < results.count - 1 {
             selectedIndex += 1
+        } else {
+            selectedIndex = 0
         }
     }
 
@@ -40,8 +46,11 @@ class SearchViewModel: ObservableObject {
     }
 
     private func updateResults() {
-        let matches = FuzzyMatcher.filter(apps: allApps, query: query)
-        results = Array(matches.prefix(Preferences.maxResults))
+        if query.isEmpty {
+            results = []
+        } else {
+            results = FuzzyMatcher.filter(apps: allApps, query: query)
+        }
         selectedIndex = 0
     }
 }
@@ -109,6 +118,6 @@ struct SearchView: View {
                 }
             }
         }
-        .frame(width: 680, height: 400)
+        .frame(width: 680)
     }
 }

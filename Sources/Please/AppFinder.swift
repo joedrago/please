@@ -49,9 +49,14 @@ enum AppFinder {
     private static func appInfo(from url: URL) -> AppInfo? {
         guard let bundle = Bundle(url: url) else { return nil }
 
-        let name = bundle.infoDictionary?["CFBundleDisplayName"] as? String
-            ?? bundle.infoDictionary?["CFBundleName"] as? String
-            ?? url.deletingPathExtension().lastPathComponent
+        let fallback = url.deletingPathExtension().lastPathComponent
+        let name = [
+            bundle.infoDictionary?["CFBundleDisplayName"] as? String,
+            bundle.infoDictionary?["CFBundleName"] as? String,
+        ]
+        .compactMap { $0 }
+        .first { !$0.isEmpty }
+            ?? fallback
 
         let icon = NSWorkspace.shared.icon(forFile: url.path)
         icon.size = NSSize(width: 32, height: 32)
