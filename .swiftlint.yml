@@ -1,0 +1,16 @@
+disabled_rules:
+  - trailing_comma
+  - identifier_name
+  - type_body_length
+  - file_length
+  - function_body_length
+  - line_length
+  - opening_brace
+  - cyclomatic_complexity
+
+included:
+  - Sources
+
+excluded:
+  - .build
+  - Package.swift
