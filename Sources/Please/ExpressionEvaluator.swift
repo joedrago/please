@@ -19,7 +19,15 @@ enum ExpressionEvaluator {
         guard hasDigit, hasOperator else { return nil }
 
         // Replace ^ with ** for NSExpression power operator
-        let expr = trimmed.replacingOccurrences(of: "^", with: "**")
+        var expr = trimmed.replacingOccurrences(of: "^", with: "**")
+
+        // Promote all integer literals to doubles so NSExpression uses
+        // floating-point arithmetic (avoids surprising integer truncation)
+        expr = expr.replacingOccurrences(
+            of: "(?<!\\.)\\b(\\d+)(?!\\.\\d)\\b",
+            with: "$1.0",
+            options: .regularExpression
+        )
 
         // NSExpression throws ObjC exceptions on malformed input
         var result: AnyObject?
@@ -35,11 +43,10 @@ enum ExpressionEvaluator {
         let doubleVal = number.doubleValue
         guard doubleVal.isFinite else { return "Error" }
 
-        if doubleVal == doubleVal.rounded(.towardZero),
-           doubleVal >= Double(Int.min), doubleVal <= Double(Int.max)
-        {
-            return String(Int(doubleVal))
+        let formatted = String(doubleVal)
+        if formatted.hasSuffix(".0") {
+            return String(formatted.dropLast(2))
         }
-        return String(format: "%.10g", doubleVal)
+        return formatted
     }
 }
